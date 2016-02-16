@@ -102,4 +102,21 @@ class SQLObject
 
     self.id = DBConnection.last_insert_row_id
   end
+
+  def update
+    attr_vals = self.attribute_values
+    id = attr_vals.shift
+    columns = self.class.columns.drop(1)
+    col_names = columns.map(&:to_s).join(' = ?, ')
+    col_names += '= ?'
+
+    DBConnection.execute(<<-SQL, *attr_vals)
+      UPDATE
+        #{self.class.table_name}
+      SET
+        #{col_names}
+      WHERE
+        id = #{id}
+    SQL
+  end
 end
