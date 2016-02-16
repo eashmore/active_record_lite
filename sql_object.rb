@@ -53,17 +53,17 @@ class SQLObject
   end
 
   def self.find(id)
-    result = DBConnection.execute(<<-SQL)
+    result = DBConnection.execute(<<-SQL, id)
       SELECT
         #{table_name}.*
       FROM
         #{table_name}
       WHERE
-        id = #{id}
+        #{table_name}.id = ?
     SQL
 
     return nil if result.length == 0
-    self.new(result.first)
+    parse_all(result).first
   end
 
   def initialize(params = {})
@@ -80,5 +80,26 @@ class SQLObject
 
   def attributes
     @attributes ||= {}
+  end
+
+  def attribute_values
+    self.class.columns.map{ |col| self.attributes[col] }
+  end
+
+  def insert
+    columns = self.class.columns.drop(1)
+    col_names = columns.map(&:to_s).join(', ')
+
+    attr_vals = self.attribute_values.drop(1)
+    question_marks = (['?'] * attr_vals.length).join(', ')
+
+    DBConnection.execute(<<-SQL, attr_vals)
+      INSERT INTO
+        #{self.class.table_name} (#{col_names})
+      VALUES
+        (#{question_marks})
+    SQL
+
+    self.id = DBConnection.last_insert_row_id
   end
 end
