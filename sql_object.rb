@@ -36,6 +36,18 @@ class SQLObject
     @table_name || name.underscore.pluralize
   end
 
+  def initialize(params = {})
+    class_name = self.class
+    params.each do |attr_name, value|
+      attr_name = attr_name.to_sym
+      if class_name.columns.include?(attr_name)
+        self.send("#{attr_name}=", value)
+      else
+        raise "unknown attribute '#{attr_name}'"
+      end
+    end
+  end
+
   def attributes
     @attributes ||= {}
   end
