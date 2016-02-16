@@ -12,6 +12,7 @@ class SQLObject
       LIMIT
         0
     SQL
+
     cols[0].map!(&:to_sym)
     @columns = cols[0]
   end
@@ -49,6 +50,20 @@ class SQLObject
 
   def self.parse_all(results)
     results.map { |result| self.new(result) }
+  end
+
+  def self.find(id)
+    result = DBConnection.execute(<<-SQL)
+      SELECT
+        #{table_name}.*
+      FROM
+        #{table_name}
+      WHERE
+        id = #{id}
+    SQL
+
+    return nil if result.length == 0
+    self.new(result.first)
   end
 
   def initialize(params = {})
