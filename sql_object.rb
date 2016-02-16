@@ -16,11 +16,27 @@ class SQLObject
     @columns = cols[0]
   end
 
+  def self.finalize!
+    self.columns.each do |col|
+      define_method(col) do
+        self.attributes[col]
+      end
+
+      define_method("#{col}=") do |value|
+        self.attributes[col] = value
+      end
+    end
+  end
+
   def self.table_name=(table_name)
     @table_name = table_name
   end
 
   def self.table_name
     @table_name || name.underscore.pluralize
+  end
+
+  def attributes
+    @attributes ||= {}
   end
 end
