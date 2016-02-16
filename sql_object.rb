@@ -36,6 +36,21 @@ class SQLObject
     @table_name || name.underscore.pluralize
   end
 
+  def self.all
+    results = DBConnection.execute(<<-SQL)
+      SELECT
+        #{table_name}.*
+      FROM
+        #{table_name}
+    SQL
+
+    parse_all(results)
+  end
+
+  def self.parse_all(results)
+    results.map { |result| self.new(result) }
+  end
+
   def initialize(params = {})
     class_name = self.class
     params.each do |attr_name, value|
