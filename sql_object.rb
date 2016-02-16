@@ -138,9 +138,3 @@ class SQLObject
     id.nil? ? insert : update
   end
 end
-
-module Searchable
-  def where(params)
-    # ...
-  end
-end
