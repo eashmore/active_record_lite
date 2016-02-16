@@ -66,6 +66,21 @@ class SQLObject
     parse_all(result).first
   end
 
+  def where(params)
+    where_line = params.keys.join(' = ? AND ') + ' = ?'
+
+    results = DBConnection.execute(<<-SQL, *params.values)
+      SELECT
+        *
+      FROM
+        #{table_name}
+      WHERE
+        #{where_line}
+    SQL
+
+    parse_all(results)
+  end
+
   def initialize(params = {})
     class_name = self.class
     params.each do |attr_name, value|
@@ -121,5 +136,11 @@ class SQLObject
 
   def save
     id.nil? ? insert : update
+  end
+end
+
+module Searchable
+  def where(params)
+    # ...
   end
 end
