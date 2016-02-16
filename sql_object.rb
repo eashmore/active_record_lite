@@ -13,8 +13,8 @@ class SQLObject
         0
     SQL
 
-    cols[0].map!(&:to_sym)
-    @columns = cols[0]
+    col = cols.first.map!(&:to_sym)
+    @columns = col
   end
 
   def self.finalize!
@@ -34,7 +34,7 @@ class SQLObject
   end
 
   def self.table_name
-    @table_name || name.underscore.pluralize
+    @table_name || self.name.underscore.pluralize
   end
 
   def self.all
@@ -93,7 +93,7 @@ class SQLObject
     attr_vals = self.attribute_values.drop(1)
     question_marks = (['?'] * attr_vals.length).join(', ')
 
-    DBConnection.execute(<<-SQL, attr_vals)
+    DBConnection.execute(<<-SQL, *attr_vals)
       INSERT INTO
         #{self.class.table_name} (#{col_names})
       VALUES
@@ -104,19 +104,22 @@ class SQLObject
   end
 
   def update
-    attr_vals = self.attribute_values
-    id = attr_vals.shift
+    attr_vals = self.attribute_values.drop(1)
     columns = self.class.columns.drop(1)
     col_names = columns.map(&:to_s).join(' = ?, ')
     col_names += '= ?'
 
-    DBConnection.execute(<<-SQL, *attr_vals)
+    DBConnection.execute(<<-SQL, *attr_vals, id)
       UPDATE
         #{self.class.table_name}
       SET
         #{col_names}
       WHERE
-        id = #{id}
+        #{self.class.table_name}.id = ?
     SQL
+  end
+
+  def save
+    id.nil? ? insert : update
   end
 end
